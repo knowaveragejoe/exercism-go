@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 )
 
@@ -21,8 +22,16 @@ type Tournament struct {
 	teams map[string]*Team
 }
 
+type By func(team1, team2 *Team) bool
+
+// teamSorter joins a By function and a slice of teams to be sorted.
+type teamSorter struct {
+	teams []*Team
+	by    func(team1, team2 *Team) bool // Closure used in the Less method.
+}
+
 var (
-	alaska     = Team{name: "Allegoric Alaskans"}
+	alaska     = Team{name: "Allegoric Alaskians"}
 	badgers    = Team{name: "Blithering Badgers"}
 	california = Team{name: "Courageous Californians"}
 	donkeys    = Team{name: "Devastating Donkeys"}
@@ -106,18 +115,18 @@ func UpdateScores(team1 string, team2 string, outcome string) error {
 		tournament.teams[team1].wins += 1
 		tournament.teams[team2].losses += 1
 
-		tournament.teams[team1].points = 3
+		tournament.teams[team1].points += outcomes[outcome]
 	case "loss":
 		tournament.teams[team1].losses += 1
 		tournament.teams[team2].wins += 1
 
-		tournament.teams[team2].points = 3
+		tournament.teams[team2].points += outcomes[outcome]
 	case "draw":
 		tournament.teams[team1].draws += 1
 		tournament.teams[team2].draws += 1
 
-		tournament.teams[team1].points = 1
-		tournament.teams[team2].points = 1
+		tournament.teams[team1].points += outcomes[outcome]
+		tournament.teams[team2].points += outcomes[outcome]
 	}
 
 	tournament.teams[team1].matches += 1
@@ -127,13 +136,22 @@ func UpdateScores(team1 string, team2 string, outcome string) error {
 }
 
 func WriteScores(writer io.Writer) error {
+	// Get sorted teams
+	sortedTeams, err := SortTeamsByScore()
+	if err != nil {
+		return err
+	}
+
+	// Output header
 	fmt.Fprint(writer, outputHeader)
 
-	for _, team := range tournament.teams {
-		// offset := 32 - len(team.name)
-		line := fmt.Sprintf("%v | %v |  %v |  %v |  %v |  %v\n",
-			// offset,
-			team.name,
+	// Loop over sorted teams and output
+	for _, team := range sortedTeams {
+		// Calculate offset for padding on team names
+		offset := 31 - len(team.name)
+		line := fmt.Sprintf("%v", team.name)
+		line += strings.Repeat(" ", offset)
+		line += fmt.Sprintf("|  %v |  %v |  %v |  %v |  %v\n",
 			team.matches,
 			team.wins,
 			team.draws,
@@ -141,8 +159,51 @@ func WriteScores(writer io.Writer) error {
 			team.points,
 		)
 
-		fmt.Fprint(writer, line)
+		// Write line to output buffer
+		_, err := fmt.Fprint(writer, line)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
+}
+
+func SortTeamsByScore() ([]*Team, error) {
+	// Make a slice of Teams
+	teams := make([]*Team, 0, len(tournament.teams))
+	for _, team := range tournament.teams {
+		teams = append(teams, team)
+	}
+
+	// Closure defining how to sort by points
+	points := func(team1, team2 *Team) bool {
+		return team1.points > team2.points
+	}
+
+	// Perform the sort
+	By(points).Sort(teams)
+
+	return teams, nil
+}
+
+// Sort is a method on the function type, By, that sorts the argument slice according to the function.
+func (by By) Sort(teams []*Team) {
+	ts := &teamSorter{
+		teams: teams,
+		by:    by, // The Sort method's receiver is the function (closure) that defines the sort order.
+	}
+	sort.Sort(ts)
+}
+
+func (s *teamSorter) Swap(i, j int) {
+	s.teams[i], s.teams[j] = s.teams[j], s.teams[i]
+}
+
+func (s *teamSorter) Len() int {
+	return len(s.teams)
+}
+
+func (s *teamSorter) Less(i, j int) bool {
+	return s.by(s.teams[i], s.teams[j])
 }
