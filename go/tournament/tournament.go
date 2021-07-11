@@ -50,13 +50,39 @@ var (
 		"loss": 0,
 		"draw": 1,
 	}
+
+	// Closure to sort by points then alphabetically in the case of a tie
+	sortByPoints = func(team1, team2 *Team) bool {
+		if (team1.points == team2.points) {
+			return team1.name < team2.name
+		}
+
+		return team1.points > team2.points
+	}
 )
 
 const (
 	outputHeader = "Team                           | MP |  W |  D |  L |  P\n"
 )
 
+func (tournament *Tournament) Reset() error {
+	for _, team := range tournament.teams {
+		team.matches = 0
+		team.wins = 0
+		team.draws = 0
+		team.losses = 0
+		team.points = 0
+	}
+
+	return nil
+}
+
 func Tally(r io.Reader, w io.Writer) error {
+	err := tournament.Reset()
+	if err != nil {
+		return err
+	}
+
 	scanner := bufio.NewScanner(r)
 
 	for scanner.Scan() {
@@ -68,12 +94,16 @@ func Tally(r io.Reader, w io.Writer) error {
 			continue
 		}
 
+		// Skip comments
+		if strings.Contains(line, "#") {
+			continue
+		}
+
 		// Attempt to split on semicolon
 		values := strings.Split(line, ";")
 
 		// Every line should contain 3 values after splitting on semicolons.
 		if len(values) != 3 {
-			fmt.Println(line)
 			return errors.New("Invalid match format: " + fmt.Sprintf("%v", values))
 		}
 
@@ -89,7 +119,7 @@ func Tally(r io.Reader, w io.Writer) error {
 	}
 
 	// Write output
-	err := WriteScores(w)
+	err = WriteScores(w)
 	if err != nil {
 		return err
 	}
@@ -115,18 +145,18 @@ func UpdateScores(team1 string, team2 string, outcome string) error {
 		tournament.teams[team1].wins += 1
 		tournament.teams[team2].losses += 1
 
-		tournament.teams[team1].points += outcomes[outcome]
+		tournament.teams[team1].points += 3
 	case "loss":
 		tournament.teams[team1].losses += 1
 		tournament.teams[team2].wins += 1
 
-		tournament.teams[team2].points += outcomes[outcome]
+		tournament.teams[team2].points += 3
 	case "draw":
 		tournament.teams[team1].draws += 1
 		tournament.teams[team2].draws += 1
 
-		tournament.teams[team1].points += outcomes[outcome]
-		tournament.teams[team2].points += outcomes[outcome]
+		tournament.teams[team1].points += 1
+		tournament.teams[team2].points += 1
 	}
 
 	tournament.teams[team1].matches += 1
@@ -176,13 +206,8 @@ func SortTeamsByScore() ([]*Team, error) {
 		teams = append(teams, team)
 	}
 
-	// Closure defining how to sort by points
-	points := func(team1, team2 *Team) bool {
-		return team1.points > team2.points
-	}
-
 	// Perform the sort
-	By(points).Sort(teams)
+	By(sortByPoints).Sort(teams)
 
 	return teams, nil
 }
