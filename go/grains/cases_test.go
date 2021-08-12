@@ -3,7 +3,7 @@ package grains
 // Source: exercism/problem-specifications
 // Commit: 2ec42ab Grains: Fixed canonical data to have standard error indicator (#1322)
 // Problem Specifications Version: 1.2.0
-
+  // Testing github spaces!
 // returns the number of grains on the square
 var squareTests = []struct {
 	description string
