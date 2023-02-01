@@ -1,43 +1,26 @@
-// Bob is a lackadaisical teenager
+// This is a "stub" file.  It's a little start on your solution.
+// It's not a complete solution though; you have to write some code.
+
+// Package bob should have a package comment that summarizes what it's about.
+// https://golang.org/doc/effective_go.html#commentary
 package bob
 
-import (
-	"regexp"
-	"strings"
-)
+import "strings"
 
-const (
-	questionAnswer     = "Sure."
-	yellAnswer         = "Whoa, chill out!"
-	yellQuestionAnswer = "Calm down, I know what I'm doing!"
-	emptyAnswer        = "Fine, be that way!"
-	defaultAnswer      = "Whatever."
-)
-
-// Returns bob's response
+// Hey should have a comment documenting it.
 func Hey(remark string) string {
-	// Test for empty remark
-	if len(remark) <= 0 {
-		return emptyAnswer
+	if len(remark) <= 0 || !strings.ContainsAny(remark, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890") {
+		return "Fine. Be that way!"
 	}
 
-	// Strip out all non-letters
-	nonletters := regexp.MustCompile(`\d`)
-	remark = nonletters.ReplaceAllString(remark, "")
-
-	// Test for question mark
-	if strings.Contains(remark, "?") {
-		if remark == strings.ToUpper(remark) {
-			return yellQuestionAnswer
-		} else {
-			return questionAnswer
+	if strings.ToUpper(remark) == remark {
+		if strings.HasSuffix(remark, "?") {
+			return "Calm down, I know what I'm doing!"
 		}
+		return "Whoa, chill out!"
+	} else if strings.HasSuffix(remark, "?") {
+		return "Sure."
+	} else {
+		return "Whatever."
 	}
-
-	// Test if string if remark is all uppercase
-	if remark == strings.ToUpper(remark) {
-		return yellAnswer
-	}
-
-	return defaultAnswer
 }
