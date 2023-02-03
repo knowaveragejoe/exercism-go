@@ -5,21 +5,28 @@
 // https://golang.org/doc/effective_go.html#commentary
 package bob
 
-import "strings"
+import (
+	"strings"
+)
 
 // Hey should have a comment documenting it.
 func Hey(remark string) string {
-	if len(remark) <= 0 || !strings.ContainsAny(remark, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890") {
+	// Rule out any empty expressions
+	if len(remark) <= 0 || !strings.ContainsAny(remark, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890?") {
 		return "Fine. Be that way!"
 	}
 
-	if strings.ToUpper(remark) == remark {
-		if strings.HasSuffix(remark, "?") {
+	// Trim whitespace
+	remark = strings.TrimSpace(remark)
+
+	if strings.HasSuffix(remark, "?") {
+		if strings.ContainsAny(remark, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ") && strings.ToUpper(remark) == remark {
 			return "Calm down, I know what I'm doing!"
+		} else {
+			return "Sure."
 		}
+	} else if strings.ContainsAny(remark, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ") && strings.ToUpper(remark) == remark {
 		return "Whoa, chill out!"
-	} else if strings.HasSuffix(remark, "?") {
-		return "Sure."
 	} else {
 		return "Whatever."
 	}
