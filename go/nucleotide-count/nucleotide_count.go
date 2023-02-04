@@ -7,7 +7,7 @@ import (
 
 // Histogram is a mapping from nucleotide to its count in given DNA.
 // Choose a suitable data type.
-type Histogram map[string]int
+type Histogram map[rune]int
 
 // DNA is a list of nucleotides. Choose a suitable data type.
 type DNA string
@@ -19,13 +19,15 @@ type DNA string
 // The receiver appears in its own argument list between the func keyword and the method name.
 // Here, the Counts method has a receiver of type DNA named d.
 func (d DNA) Counts() (Histogram, error) {
-	var h = Histogram{"A": 0, "C": 0, "G": 0, "T": 0}
+	d = DNA(strings.ToUpper(string(d)))
+	var h = Histogram{'A': 0, 'C': 0, 'G': 0, 'T': 0}
 	for _, n := range d {
-		if strings.ContainsAny(string(n), "BDEFHIJKLMNOPQRSUVWXYZ") {
+		_, ok := h[n]
+		if !ok {
 			return h, errors.New("Invalid nucleotide detected")
 		}
 
-		h[string(n)] += 1
+		h[n] += 1
 	}
 	return h, nil
 }
