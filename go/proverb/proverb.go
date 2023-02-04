@@ -5,11 +5,18 @@
 // https://golang.org/doc/effective_go.html#commentary
 package proverb
 
+import "fmt"
+
 // Proverb should have a comment documenting it.
 func Proverb(rhyme []string) []string {
-	// Write some code here to pass the test suite.
-	// Then remove all the stock comments.
-	// They're here to help you get started but they only clutter a finished solution.
-	// If you leave them in, reviewers may protest!
-	panic("Please implement the Proverb function")
+	var result []string
+	for i, w := range rhyme {
+		if i == len(rhyme)-1 {
+			result = append(result, fmt.Sprintf("And all for the want of a %v.", rhyme[0]))
+			break
+		}
+		result = append(result, fmt.Sprintf("For want of a %v the %v was lost.", w, rhyme[i+1]))
+	}
+
+	return result
 }
